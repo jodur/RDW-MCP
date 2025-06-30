@@ -1,6 +1,6 @@
 {
   "name": "rdw-mcp-server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Model Context Protocol server for Dutch RDW vehicle registration data lookup",
   "type": "module",
   "bin": {
@@ -17,8 +17,7 @@
     "build": "tsc",
     "start": "node build/index.js",
     "dev": "tsc && node build/index.js",
-    "prepublishOnly": "npm run build",
-    "test": "node test-mcp.js"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "mcp",
@@ -45,8 +44,7 @@
     "build/**/*",
     "src/**/*",
     "README.md",
-    "LICENSE",
-    "TESTING.md"
+    "LICENSE"
   ],
   "devDependencies": {
     "@types/node": "^24.0.7",
