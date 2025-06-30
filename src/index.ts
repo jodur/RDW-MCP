@@ -77,6 +77,29 @@ interface VehicleBaseInfo {
   datum_eerste_tenaamstelling_in_nederland?: string;
   vervaldatum_apk?: string;
   dt_laatste_update_in_rdw?: string;
+  // Additional vehicle details
+  inrichting?: string;
+  aantal_deuren?: string;
+  aantal_wielen?: string;
+  massa_ledig_voertuig?: string;
+  massa_rijklaar?: string;
+  maximum_massa_trekken_ongeremd?: string;
+  maximum_massa_trekken_geremd?: string;
+  datum_tenaamstelling?: string;
+  bruto_bpm?: string;
+  zuinigheidslabel?: string;
+  exportindicator?: string;
+  openstaande_terugroepactie_indicator?: string;
+  vervaldatum_tachograaf?: string;
+  taxi_indicator?: string;
+  maximum_massa_voertuig?: string;
+  catalogusprijs?: string;
+  wam_verzekerd?: string;
+  aantal_cilinders?: string;
+  cilinderinhoud?: string;
+  massa_alt_aandr?: string;
+  nettomaximumvermogen?: string;
+  nominaal_continu_maximumvermogen?: string;
 }
 
 interface VehicleFuelInfo {
@@ -96,18 +119,83 @@ interface VehicleFuelInfo {
  * Format vehicle information for display
  */
 function formatVehicleInfo(vehicle: VehicleBaseInfo): string {
-  const info = [
+  const basicInfo = [
     `License Plate: ${vehicle.kenteken || "Unknown"}`,
     `Vehicle Type: ${vehicle.voertuigsoort || "Unknown"}`,
     `Brand: ${vehicle.merk || "Unknown"}`,
     `Model: ${vehicle.handelsbenaming || "Unknown"}`,
-    `Color: ${vehicle.eerste_kleur || "Unknown"}${vehicle.tweede_kleur ? ` / ${vehicle.tweede_kleur}` : ""}`,
+    `Variant: ${vehicle.variant || "Unknown"}`,
+    `Version: ${vehicle.uitvoering || "Unknown"}`,
+  ];
+
+  const appearance = [
+    `Primary Color: ${vehicle.eerste_kleur || "Unknown"}`,
+    ...(vehicle.tweede_kleur ? [`Secondary Color: ${vehicle.tweede_kleur}`] : []),
+    `Body Type: ${vehicle.inrichting || "Unknown"}`,
+    `Number of Doors: ${vehicle.aantal_deuren || "Unknown"}`,
+    `Number of Wheels: ${vehicle.aantal_wielen || "Unknown"}`,
+  ];
+
+  const capacity = [
     `Seats: ${vehicle.aantal_zitplaatsen || "Unknown"}`,
+    ...(vehicle.aantal_staanplaatsen ? [`Standing Places: ${vehicle.aantal_staanplaatsen}`] : []),
+  ];
+
+  const technical = [
+    `Engine Cylinders: ${vehicle.aantal_cilinders || "Unknown"}`,
+    `Engine Displacement: ${vehicle.cilinderinhoud ? `${vehicle.cilinderinhoud} cc` : "Unknown"}`,
+    `Net Max Power: ${vehicle.nettomaximumvermogen ? `${vehicle.nettomaximumvermogen} kW` : "Unknown"}`,
+    ...(vehicle.nominaal_continu_maximumvermogen ? [`Nominal Continuous Max Power: ${vehicle.nominaal_continu_maximumvermogen} kW`] : []),
+  ];
+
+  const masses = [
+    `Empty Weight: ${vehicle.massa_ledig_voertuig ? `${vehicle.massa_ledig_voertuig} kg` : "Unknown"}`,
+    `Curb Weight: ${vehicle.massa_rijklaar ? `${vehicle.massa_rijklaar} kg` : "Unknown"}`,
+    `Maximum Vehicle Mass: ${vehicle.maximum_massa_voertuig ? `${vehicle.maximum_massa_voertuig} kg` : "Unknown"}`,
+    `Max Towing (Unbraked): ${vehicle.maximum_massa_trekken_ongeremd ? `${vehicle.maximum_massa_trekken_ongeremd} kg` : "Unknown"}`,
+    `Max Towing (Braked): ${vehicle.maximum_massa_trekken_geremd ? `${vehicle.maximum_massa_trekken_geremd} kg` : "Unknown"}`,
+    ...(vehicle.massa_alt_aandr ? [`Alternative Drive Mass: ${vehicle.massa_alt_aandr} kg`] : []),
+  ];
+
+  const registration = [
     `First Registration: ${vehicle.datum_eerste_toelating || "Unknown"}`,
+    `First NL Registration: ${vehicle.datum_eerste_tenaamstelling_in_nederland || "Unknown"}`,
+    ...(vehicle.datum_tenaamstelling ? [`Current Registration: ${vehicle.datum_tenaamstelling}`] : []),
+    `Type Approval: ${vehicle.type_goedkeuring_nummer || "Unknown"}`,
+  ];
+
+  const inspection = [
     `APK Expiry: ${vehicle.vervaldatum_apk || "Unknown"}`,
+    ...(vehicle.vervaldatum_tachograaf ? [`Tachograph Expiry: ${vehicle.vervaldatum_tachograaf}`] : []),
+  ];
+
+  const financial = [
+    ...(vehicle.catalogusprijs ? [`Catalog Price: €${vehicle.catalogusprijs}`] : []),
+    ...(vehicle.bruto_bpm ? [`Gross BPM: €${vehicle.bruto_bpm}`] : []),
+  ];
+
+  const indicators = [
+    ...(vehicle.zuinigheidslabel ? [`Fuel Efficiency Label: ${vehicle.zuinigheidslabel}`] : []),
+    ...(vehicle.exportindicator ? [`Export Status: ${vehicle.exportindicator}`] : []),
+    ...(vehicle.taxi_indicator ? [`Taxi: ${vehicle.taxi_indicator}`] : []),
+    ...(vehicle.wam_verzekerd ? [`WAM Insured: ${vehicle.wam_verzekerd}`] : []),
+    ...(vehicle.openstaande_terugroepactie_indicator ? [`Open Recall: ${vehicle.openstaande_terugroepactie_indicator}`] : []),
+  ];
+
+  const sections = [
+    `BASIC INFORMATION:\n${basicInfo.join("\n")}`,
+    `APPEARANCE:\n${appearance.join("\n")}`,
+    `CAPACITY:\n${capacity.join("\n")}`,
+    `TECHNICAL SPECIFICATIONS:\n${technical.join("\n")}`,
+    `WEIGHT & TOWING:\n${masses.join("\n")}`,
+    `REGISTRATION:\n${registration.join("\n")}`,
+    `INSPECTION:\n${inspection.join("\n")}`,
+    ...(financial.length > 0 ? [`FINANCIAL:\n${financial.join("\n")}`] : []),
+    ...(indicators.length > 0 ? [`STATUS INDICATORS:\n${indicators.join("\n")}`] : []),
+    `Last Updated: ${vehicle.dt_laatste_update_in_rdw || "Unknown"}`,
   ];
   
-  return info.join("\n");
+  return sections.join("\n\n");
 }
 
 /**
@@ -143,8 +231,8 @@ server.tool(
     kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
   },
   async ({ kenteken }) => {
-    // Clean up the license plate (remove spaces, convert to uppercase)
-    const cleanKenteken = kenteken.replace(/\s+/g, "").toUpperCase();
+    // Clean up the license plate (remove spaces and hyphens, convert to uppercase)
+    const cleanKenteken = kenteken.replace(/[\s-]+/g, "").toUpperCase();
     
     try {
       // Get basic vehicle information
@@ -195,7 +283,7 @@ server.tool(
     kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
   },
   async ({ kenteken }) => {
-    const cleanKenteken = kenteken.replace(/\s+/g, "").toUpperCase();
+    const cleanKenteken = kenteken.replace(/[\s-]+/g, "").toUpperCase();
     
     try {
       // Get fuel and emissions information
