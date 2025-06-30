@@ -90,3 +90,6 @@ jspm_packages/
 *.swp
 *.swo
 *~
+
+# NPM publishing guide (internal documentation)
+NPM-PUBLISHING-GUIDE.md
