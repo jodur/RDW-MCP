@@ -287,7 +287,7 @@ Contributions are welcome! This MCP server can be extended with additional RDW d
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/rdw-mcp-server.git
+   git clone https://github.com/jodur/rdw-mcp-server.git
    cd rdw-mcp-server
    ```
 

@@ -30,15 +30,15 @@
     "netherlands",
     "automotive"
   ],
-  "author": "Your Name <your.email@example.com>",
+  "author": "Jörgen <durenjv@hotmail.com>",
   "license": "MIT",
-  "homepage": "https://github.com/yourusername/rdw-mcp-server#readme",
+  "homepage": "https://github.com/jodur/rdw-mcp-server#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/rdw-mcp-server.git"
+    "url": "git+https://github.com/jodur/rdw-mcp-server.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/rdw-mcp-server/issues"
+    "url": "https://github.com/jodur/rdw-mcp-server/issues"
   },
   "files": [
     "build/**/*",
