@@ -1,6 +1,6 @@
 {
   "name": "rdw-mcp-server",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Model Context Protocol server for Dutch RDW vehicle registration data lookup",
   "type": "module",
   "bin": {

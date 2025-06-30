@@ -126,9 +126,9 @@ interface VehicleFuelInfo {
 }
 
 /**
- * Format vehicle information for display
+ * Format vehicle information for display (including fuel/emissions data)
  */
-function formatVehicleInfo(vehicle: VehicleBaseInfo): string {
+function formatVehicleInfo(vehicle: VehicleBaseInfo, fuelData?: VehicleFuelInfo[]): string {
   const basicInfo = [
     `License Plate: ${vehicle.kenteken || "Unknown"}`,
     `Vehicle Type: ${vehicle.voertuigsoort || "Unknown"}`,
@@ -196,6 +196,24 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo): string {
     ...(vehicle.openstaande_terugroepactie_indicator ? [`Open Recall: ${vehicle.openstaande_terugroepactie_indicator}`] : []),
   ];
 
+  // Format fuel and emissions data if available
+  const fuelEmissions: string[] = [];
+  if (fuelData && fuelData.length > 0) {
+    fuelData.forEach((fuel, index) => {
+      const fuelInfo = [
+        `Fuel Type ${index + 1}: ${fuel.brandstof_omschrijving || "Unknown"}`,
+        `Emission Code: ${fuel.emissiecode_omschrijving || "Unknown"}`,
+        `Emission Level: ${fuel.uitlaatemissieniveau || "Unknown"}`,
+        `CO2 Emission Class: ${fuel.co2_emissieklasse || "Unknown"}`,
+        `Max Power: ${fuel.nettomaximumvermogen || "Unknown"} kW`,
+        `Sound Level (Driving): ${fuel.geluidsniveau_rijdend || "Unknown"} dB`,
+        `Sound Level (Idle): ${fuel.geluidsniveau_stationair || "Unknown"} dB`,
+        `Soot Emission: ${fuel.roetuitstoot || "Unknown"}`,
+      ];
+      fuelEmissions.push(fuelInfo.join("\n"));
+    });
+  }
+
   const sections = [
     `BASIC INFORMATION:\n${basicInfo.join("\n")}`,
     `APPEARANCE:\n${appearance.join("\n")}`,
@@ -206,6 +224,7 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo): string {
     `INSPECTION:\n${inspection.join("\n")}`,
     ...(financial.length > 0 ? [`FINANCIAL:\n${financial.join("\n")}`] : []),
     ...(indicators.length > 0 ? [`STATUS INDICATORS:\n${indicators.join("\n")}`] : []),
+    ...(fuelEmissions.length > 0 ? [`FUEL & EMISSIONS:\n${fuelEmissions.join("\n---\n")}`] : []),
     `Last Odometer Reading: ${vehicle.jaar_laatste_registratie_tellerstand || "Unknown"}`,
   ];
   
@@ -213,34 +232,13 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo): string {
 }
 
 /**
- * Format fuel/emissions information for display
- */
-function formatFuelInfo(fuelData: VehicleFuelInfo[]): string {
-  if (!fuelData || fuelData.length === 0) {
-    return "No fuel information available";
-  }
-
-  return fuelData.map((fuel, index) => {
-    const info = [
-      `Fuel Type ${index + 1}: ${fuel.brandstof_omschrijving || "Unknown"}`,
-      `Emission Level: ${fuel.uitlaatemissieniveau || "Unknown"}`,
-      `CO2 Class: ${fuel.co2_emissieklasse || "Unknown"}`,
-      `Max Power: ${fuel.nettomaximumvermogen || "Unknown"} kW`,
-      `Sound Level (Driving): ${fuel.geluidsniveau_rijdend || "Unknown"} dB`,
-      `Sound Level (Idle): ${fuel.geluidsniveau_stationair || "Unknown"} dB`,
-    ];
-    return info.join("\n");
-  }).join("\n---\n");
-}
-
-/**
- * Register RDW tools
+ * Register RDW tool
  */
 
-// Tool 1: License plate lookup
+// License plate lookup with complete vehicle and fuel/emissions data
 server.tool(
   "rdw-license-plate-lookup",
-  "Look up Dutch vehicle information by license plate",
+  "Look up comprehensive Dutch vehicle information including fuel and emissions data by license plate",
   {
     kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
   },
@@ -267,23 +265,23 @@ server.tool(
 
       const vehicle = vehicleData[0];
       
-      // Try to get fuel/emissions data for power information
+      // Get fuel/emissions data
       const fuelData = await makeRDWRequest<VehicleFuelInfo[]>("8ys7-d773", {
         kenteken: cleanKenteken,
       });
       
-      // If fuel data is available, use the power from there
+      // If fuel data is available, use the power from there for consistency
       if (fuelData && fuelData.length > 0 && fuelData[0].nettomaximumvermogen) {
         vehicle.nettomaximumvermogen = fuelData[0].nettomaximumvermogen;
       }
       
-      const formattedInfo = formatVehicleInfo(vehicle);
+      const formattedInfo = formatVehicleInfo(vehicle, fuelData || undefined);
 
       return {
         content: [
           {
             type: "text",
-            text: `Vehicle Information for ${cleanKenteken}:\n\n${formattedInfo}`,
+            text: `Complete Vehicle Information for ${cleanKenteken}:\n\n${formattedInfo}`,
           },
         ],
       };
@@ -293,114 +291,6 @@ server.tool(
           {
             type: "text",
             text: `Error retrieving vehicle information: ${error instanceof Error ? error.message : "Unknown error"}`,
-          },
-        ],
-      };
-    }
-  },
-);
-
-// Tool 2: Fuel and emissions data
-server.tool(
-  "rdw-fuel-emissions",
-  "Get fuel type and emissions data for a Dutch vehicle",
-  {
-    kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
-  },
-  async ({ kenteken }) => {
-    const cleanKenteken = kenteken.replace(/[\s-]+/g, "").toUpperCase();
-    
-    try {
-      // Get fuel and emissions information
-      const fuelData = await makeRDWRequest<VehicleFuelInfo[]>("8ys7-d773", {
-        kenteken: cleanKenteken,
-      });
-
-      if (!fuelData || fuelData.length === 0) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `No fuel/emissions data found for license plate: ${cleanKenteken}`,
-            },
-          ],
-        };
-      }
-
-      const formattedFuelInfo = formatFuelInfo(fuelData);
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Fuel & Emissions Data for ${cleanKenteken}:\n\n${formattedFuelInfo}`,
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error retrieving fuel/emissions data: ${error instanceof Error ? error.message : "Unknown error"}`,
-          },
-        ],
-      };
-    }
-  },
-);
-
-// Tool 3: Vehicle search by brand and model
-server.tool(
-  "rdw-vehicle-search",
-  "Search for Dutch vehicles by brand and optionally model",
-  {
-    brand: z.string().min(1).describe("Vehicle brand (e.g., 'VOLKSWAGEN', 'BMW')"),
-    model: z.string().optional().describe("Optional: Vehicle model/trade name"),
-    limit: z.number().min(1).max(100).default(10).describe("Maximum number of results (1-100, default 10)"),
-  },
-  async ({ brand, model, limit }) => {
-    try {
-      const params: Record<string, string> = {
-        merk: brand.toUpperCase(),
-        "$limit": limit.toString(),
-      };
-
-      if (model) {
-        params.handelsbenaming = model.toUpperCase();
-      }
-
-      const vehicleData = await makeRDWRequest<VehicleBaseInfo[]>("m9d7-ebf2", params);
-
-      if (!vehicleData || vehicleData.length === 0) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: `No vehicles found for brand: ${brand}${model ? ` and model: ${model}` : ""}`,
-            },
-          ],
-        };
-      }
-
-      const formattedResults = vehicleData.map((vehicle, index) => 
-        `${index + 1}. ${formatVehicleInfo(vehicle)}`
-      ).join("\n\n---\n\n");
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Found ${vehicleData.length} vehicle(s) for ${brand}${model ? ` ${model}` : ""}:\n\n${formattedResults}`,
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error searching vehicles: ${error instanceof Error ? error.message : "Unknown error"}`,
           },
         ],
       };

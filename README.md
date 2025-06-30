@@ -26,11 +26,12 @@ A Model Context Protocol (MCP) server for querying Dutch RDW (Rijksdienst voor h
 
 ## Features
 
-- **License Plate Lookup**: Get comprehensive vehicle information by Dutch license plate (kenteken)
-- **Fuel & Emissions Data**: Retrieve detailed fuel type, emissions, and environmental specifications
-- **Vehicle Search**: Search for vehicles by brand and optionally model name
+- **Complete License Plate Lookup**: Get comprehensive vehicle information by Dutch license plate (kenteken)
+- **Integrated Fuel & Emissions**: Detailed fuel type, emissions, and environmental specifications included
+- **Technical Specifications**: Engine details, power, weights, and towing capacity
+- **Registration Data**: First registration, APK dates, and inspection information
 - **Real-time Data**: Access up-to-date information from official RDW databases
-- **Enhanced Data**: Detailed vehicle specifications including technical, financial, and inspection data
+- **Enhanced Data**: Complete vehicle specifications including financial and status indicators
 
 ## Installation
 
@@ -121,33 +122,24 @@ For development with auto-rebuild:
 npm run dev
 ```
 
-## Available Tools
+## Available Tool
 
-### 1. `rdw-license-plate-lookup`
-Look up vehicle information by Dutch license plate.
-
-**Parameters:**
-- `kenteken` (string): Dutch license plate to look up
-
-**Example:** Look up license plate "12-ABC-3"
-
-### 2. `rdw-fuel-emissions`
-Get fuel type and emissions data for a vehicle.
+### `rdw-license-plate-lookup`
+Look up comprehensive vehicle information including fuel and emissions data by Dutch license plate.
 
 **Parameters:**
 - `kenteken` (string): Dutch license plate to look up
 
-**Example:** Get emissions data for "12-ABC-3"
+**Returns:**
+- Complete vehicle information including:
+  - Basic details (brand, model, color, etc.)
+  - Technical specifications (engine, power, dimensions)
+  - Weight and towing capacity
+  - Registration and inspection dates
+  - Fuel type and emissions data
+  - Sound levels and environmental classifications
 
-### 3. `rdw-vehicle-search`
-Search for vehicles by brand and optionally model.
-
-**Parameters:**
-- `brand` (string): Vehicle brand (e.g., "VOLKSWAGEN", "BMW")
-- `model` (string, optional): Vehicle model/trade name
-- `limit` (number, optional): Maximum results (1-100, default 10)
-
-**Example:** Search for BMW vehicles
+**Example:** Look up license plate "12-ABC-3" for complete vehicle data
 
 ## Requirements
 
@@ -211,25 +203,23 @@ The RDW API may impose rate limits. If you encounter rate limiting:
 
 Once connected to an MCP client like Claude Desktop, you can ask questions like:
 
-**License Plate Lookups:**
+**Complete Vehicle Information:**
 - "Look up license plate 12-ABC-3"
 - "What information is available for kenteken XYZ-123?"
 - "Tell me about the vehicle with plate 1-ABC-23"
+- "Show me all data for license plate ABC-12-D"
 
-**Emissions and Fuel Data:**
+**Specific Information Requests:**
 - "What are the emissions data for kenteken ABC-12-D?"
 - "Show me fuel consumption for license plate XYZ-456"
 - "What's the environmental category of vehicle 12-ABC-3?"
+- "What's the engine size and power of kenteken DEF-456?"
+- "When does the APK expire for license plate GHI-789?"
 
-**Vehicle Search:**
-- "Show me BMW vehicles registered in the Netherlands"
-- "Find Volkswagen Golf models in the database"
-- "Search for MERCEDES vehicles"
-- "List Toyota Corolla vehicles"
-
-**Combined Queries:**
-- "Find BMW X5 vehicles and show their emissions data"
-- "Search for electric vehicles by Tesla"
+**Technical Details:**
+- "What's the towing capacity of vehicle 12-ABC-3?"
+- "Show me the weight specifications for kenteken XYZ-456"
+- "What are the sound levels for license plate ABC-12-D?"
 
 ## Technical Details
 
@@ -320,6 +310,13 @@ The RDW provides many more datasets that could be integrated:
 - Include proper error handling
 
 ## Changelog
+
+### Version 1.1.0
+- **BREAKING CHANGE**: Simplified to single comprehensive lookup tool
+- Integrated all fuel and emissions data into main license plate lookup
+- Removed separate fuel/emissions and vehicle search tools
+- Enhanced fuel/emissions data display with emission codes and soot emissions
+- Improved data completeness in single query
 
 ### Version 1.0.2
 - Comprehensive README improvements for npm users
