@@ -85,6 +85,7 @@ interface VehicleBaseInfo {
   massa_rijklaar?: string;
   maximum_massa_trekken_ongeremd?: string;
   maximum_massa_trekken_geremd?: string;
+  maximum_trekken_massa_geremd?: string; // Correct RDW field name
   datum_tenaamstelling?: string;
   bruto_bpm?: string;
   zuinigheidslabel?: string;
@@ -100,6 +101,15 @@ interface VehicleBaseInfo {
   massa_alt_aandr?: string;
   nettomaximumvermogen?: string;
   nominaal_continu_maximumvermogen?: string;
+  // Additional RDW fields
+  toegestane_maximum_massa_voertuig?: string;
+  technische_max_massa_voertuig?: string;
+  maximum_massa_samenstelling?: string;
+  // Fields to fix Unknown values
+  vermogen_massarijklaar?: string;
+  typegoedkeuringsnummer?: string;
+  jaar_laatste_registratie_tellerstand?: string;
+  type?: string;
 }
 
 interface VehicleFuelInfo {
@@ -145,15 +155,18 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo): string {
     `Engine Cylinders: ${vehicle.aantal_cilinders || "Unknown"}`,
     `Engine Displacement: ${vehicle.cilinderinhoud ? `${vehicle.cilinderinhoud} cc` : "Unknown"}`,
     `Net Max Power: ${vehicle.nettomaximumvermogen ? `${vehicle.nettomaximumvermogen} kW` : "Unknown"}`,
+    `Power/Mass Ratio: ${vehicle.vermogen_massarijklaar ? `${vehicle.vermogen_massarijklaar} kW/kg` : "Unknown"}`,
     ...(vehicle.nominaal_continu_maximumvermogen ? [`Nominal Continuous Max Power: ${vehicle.nominaal_continu_maximumvermogen} kW`] : []),
   ];
 
   const masses = [
-    `Empty Weight: ${vehicle.massa_ledig_voertuig ? `${vehicle.massa_ledig_voertuig} kg` : "Unknown"}`,
-    `Curb Weight: ${vehicle.massa_rijklaar ? `${vehicle.massa_rijklaar} kg` : "Unknown"}`,
-    `Maximum Vehicle Mass: ${vehicle.maximum_massa_voertuig ? `${vehicle.maximum_massa_voertuig} kg` : "Unknown"}`,
-    `Max Towing (Unbraked): ${vehicle.maximum_massa_trekken_ongeremd ? `${vehicle.maximum_massa_trekken_ongeremd} kg` : "Unknown"}`,
-    `Max Towing (Braked): ${vehicle.maximum_massa_trekken_geremd ? `${vehicle.maximum_massa_trekken_geremd} kg` : "Unknown"}`,
+    `Empty Weight (Massa ledig): ${vehicle.massa_ledig_voertuig ? `${vehicle.massa_ledig_voertuig} kg` : "Unknown"}`,
+    `Curb Weight (Massa rijklaar): ${vehicle.massa_rijklaar ? `${vehicle.massa_rijklaar} kg` : "Unknown"}`,
+    `Maximum Vehicle Mass: ${vehicle.toegestane_maximum_massa_voertuig || vehicle.maximum_massa_voertuig ? `${vehicle.toegestane_maximum_massa_voertuig || vehicle.maximum_massa_voertuig} kg` : "Unknown"}`,
+    `Technical Max Mass: ${vehicle.technische_max_massa_voertuig ? `${vehicle.technische_max_massa_voertuig} kg` : "Unknown"}`,
+    `Max Towing Unbraked (Ongeremd): ${vehicle.maximum_massa_trekken_ongeremd ? `${vehicle.maximum_massa_trekken_ongeremd} kg` : "Unknown"}`,
+    `Max Towing Braked (Geremd): ${vehicle.maximum_trekken_massa_geremd || vehicle.maximum_massa_trekken_geremd ? `${vehicle.maximum_trekken_massa_geremd || vehicle.maximum_massa_trekken_geremd} kg` : "Unknown"}`,
+    ...(vehicle.maximum_massa_samenstelling ? [`Max Combination Mass: ${vehicle.maximum_massa_samenstelling} kg`] : []),
     ...(vehicle.massa_alt_aandr ? [`Alternative Drive Mass: ${vehicle.massa_alt_aandr} kg`] : []),
   ];
 
@@ -161,7 +174,8 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo): string {
     `First Registration: ${vehicle.datum_eerste_toelating || "Unknown"}`,
     `First NL Registration: ${vehicle.datum_eerste_tenaamstelling_in_nederland || "Unknown"}`,
     ...(vehicle.datum_tenaamstelling ? [`Current Registration: ${vehicle.datum_tenaamstelling}`] : []),
-    `Type Approval: ${vehicle.type_goedkeuring_nummer || "Unknown"}`,
+    `Type Approval: ${vehicle.typegoedkeuringsnummer || vehicle.type_goedkeuring_nummer || "Unknown"}`,
+    `Vehicle Type Code: ${vehicle.type || "Unknown"}`,
   ];
 
   const inspection = [
@@ -187,12 +201,12 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo): string {
     `APPEARANCE:\n${appearance.join("\n")}`,
     `CAPACITY:\n${capacity.join("\n")}`,
     `TECHNICAL SPECIFICATIONS:\n${technical.join("\n")}`,
-    `WEIGHT & TOWING:\n${masses.join("\n")}`,
+    `WEIGHTS & TOWING CAPACITY:\n${masses.join("\n")}`,
     `REGISTRATION:\n${registration.join("\n")}`,
     `INSPECTION:\n${inspection.join("\n")}`,
     ...(financial.length > 0 ? [`FINANCIAL:\n${financial.join("\n")}`] : []),
     ...(indicators.length > 0 ? [`STATUS INDICATORS:\n${indicators.join("\n")}`] : []),
-    `Last Updated: ${vehicle.dt_laatste_update_in_rdw || "Unknown"}`,
+    `Last Odometer Reading: ${vehicle.jaar_laatste_registratie_tellerstand || "Unknown"}`,
   ];
   
   return sections.join("\n\n");
@@ -252,6 +266,17 @@ server.tool(
       }
 
       const vehicle = vehicleData[0];
+      
+      // Try to get fuel/emissions data for power information
+      const fuelData = await makeRDWRequest<VehicleFuelInfo[]>("8ys7-d773", {
+        kenteken: cleanKenteken,
+      });
+      
+      // If fuel data is available, use the power from there
+      if (fuelData && fuelData.length > 0 && fuelData[0].nettomaximumvermogen) {
+        vehicle.nettomaximumvermogen = fuelData[0].nettomaximumvermogen;
+      }
+      
       const formattedInfo = formatVehicleInfo(vehicle);
 
       return {

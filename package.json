@@ -1,29 +1,52 @@
 {
-  "name": "rdw-mcp",
+  "name": "rdw-mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for Dutch RDW vehicle registration data",
+  "description": "Model Context Protocol server for Dutch RDW vehicle registration data lookup",
   "type": "module",
   "bin": {
-    "rdw-mcp": "./build/index.js"
+    "rdw-mcp": "build/index.js"
   },
   "main": "./build/index.js",
+  "exports": {
+    ".": "./build/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node build/index.js",
     "dev": "tsc && node build/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepublishOnly": "npm run build",
+    "test": "node test-mcp.js"
   },
   "keywords": [
     "mcp",
+    "model-context-protocol",
     "rdw",
     "dutch",
     "vehicle",
-    "registration"
+    "registration",
+    "license-plate",
+    "netherlands",
+    "automotive"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/yourusername/rdw-mcp-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/rdw-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/rdw-mcp-server/issues"
+  },
   "files": [
-    "build"
+    "build/**/*",
+    "src/**/*",
+    "README.md",
+    "LICENSE",
+    "TESTING.md"
   ],
   "devDependencies": {
     "@types/node": "^24.0.7",

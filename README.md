@@ -1,5 +1,8 @@
 # RDW MCP Server
 
+[![npm version](https://badge.fury.io/js/rdw-mcp-server.svg)](https://badge.fury.io/js/rdw-mcp-server)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Model Context Protocol (MCP) server for querying Dutch RDW (Rijksdienst voor het Wegverkeer) vehicle registration data. This server provides tools to look up vehicle information, fuel/emissions data, and search vehicles by brand and model using the official RDW open data API.
 
 ## Features
@@ -8,20 +11,65 @@ A Model Context Protocol (MCP) server for querying Dutch RDW (Rijksdienst voor h
 - **Fuel & Emissions Data**: Retrieve detailed fuel type, emissions, and environmental specifications
 - **Vehicle Search**: Search for vehicles by brand and optionally model name
 - **Real-time Data**: Access up-to-date information from official RDW databases
+- **Enhanced Data**: Detailed vehicle specifications including technical, financial, and inspection data
 
 ## Installation
 
+### Global Installation (Recommended)
+
 ```bash
+npm install -g rdw-mcp-server
+```
+
+After installation, you can run the server directly:
+
+```bash
+rdw-mcp
+```
+
+### Local Installation
+
+```bash
+npm install rdw-mcp-server
+```
+
+### Development Installation
+
+```bash
+git clone <your-repo-url>
+cd rdw-mcp-server
 npm install
 npm run build
 ```
 
 ## Usage
 
-### Running the Server
+### As a Global Command
+
+After global installation:
 
 ```bash
-npm start
+rdw-mcp
+```
+
+### In MCP Client Configuration
+
+Add to your MCP client configuration:
+
+```json
+{
+  "servers": {
+    "rdw": {
+      "command": "rdw-mcp"
+    }
+  }
+}
+```
+
+### Direct Node.js Usage
+
+```bash
+npx rdw-mcp-server
 ```
 
 ### Development
