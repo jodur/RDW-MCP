@@ -89,7 +89,7 @@ The server will start and listen on stdio for MCP protocol messages.
 
 Add to your MCP client configuration (e.g., Claude Desktop):
 
-**If installed globally:**
+**Using global installation (recommended):**
 ```json
 {
   "servers": {
@@ -100,7 +100,7 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 }
 ```
 
-**If installed locally:**
+**Using npx (alternative):**
 ```json
 {
   "servers": {
@@ -159,7 +159,40 @@ Look up ALL available vehicle information from RDW databases by Dutch license pl
 
 To use this MCP server with Claude Desktop, add the following to your `claude_desktop_config.json`:
 
-### Windows
+### Using Global Installation (Recommended)
+
+If you installed globally with `npm install -g rdw-mcp-server`:
+
+```json
+{
+  "mcpServers": {
+    "rdw": {
+      "command": "rdw-mcp"
+    }
+  }
+}
+```
+
+### Using NPX (Alternative)
+
+If you prefer not to install globally:
+
+```json
+{
+  "mcpServers": {
+    "rdw": {
+      "command": "npx",
+      "args": ["rdw-mcp-server"]
+    }
+  }
+}
+```
+
+### Development Mode Only
+
+For development with local source code:
+
+#### Windows
 ```json
 {
   "mcpServers": {
@@ -171,7 +204,7 @@ To use this MCP server with Claude Desktop, add the following to your `claude_de
 }
 ```
 
-### macOS/Linux
+#### macOS/Linux
 ```json
 {
   "mcpServers": {
@@ -270,9 +303,11 @@ The server includes comprehensive error handling for:
 - Some older vehicles may not have complete data in the RDW database
 
 **Claude Desktop connection issues:**
-- Ensure the absolute path in your configuration is correct
-- Check that the build directory exists: `ls build/` or `dir build\`
+- Verify your configuration matches the installation method (global vs npx)
+- If using global installation, ensure `rdw-mcp` command works in terminal
+- If using npx, ensure `npx rdw-mcp-server` works in terminal
 - Restart Claude Desktop after configuration changes
+- For development setups, ensure the absolute path and build directory are correct
 
 ### Getting Help
 
