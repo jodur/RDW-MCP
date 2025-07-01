@@ -77,7 +77,7 @@ interface VehicleBaseInfo {
   datum_eerste_tenaamstelling_in_nederland?: string;
   vervaldatum_apk?: string;
   dt_laatste_update_in_rdw?: string;
-  // Additional vehicle details
+  // Additional vehicle details from API response
   inrichting?: string;
   aantal_deuren?: string;
   aantal_wielen?: string;
@@ -85,11 +85,12 @@ interface VehicleBaseInfo {
   massa_rijklaar?: string;
   maximum_massa_trekken_ongeremd?: string;
   maximum_massa_trekken_geremd?: string;
-  maximum_trekken_massa_geremd?: string; // Correct RDW field name
+  maximum_trekken_massa_geremd?: string;
   datum_tenaamstelling?: string;
   bruto_bpm?: string;
   zuinigheidslabel?: string;
   exportindicator?: string;
+  export_indicator?: string;
   openstaande_terugroepactie_indicator?: string;
   vervaldatum_tachograaf?: string;
   taxi_indicator?: string;
@@ -101,15 +102,29 @@ interface VehicleBaseInfo {
   massa_alt_aandr?: string;
   nettomaximumvermogen?: string;
   nominaal_continu_maximumvermogen?: string;
-  // Additional RDW fields
   toegestane_maximum_massa_voertuig?: string;
   technische_max_massa_voertuig?: string;
   maximum_massa_samenstelling?: string;
-  // Fields to fix Unknown values
   vermogen_massarijklaar?: string;
   typegoedkeuringsnummer?: string;
   jaar_laatste_registratie_tellerstand?: string;
   type?: string;
+  // Additional fields found in T-347-SJ
+  maximale_constructiesnelheid?: string;
+  lengte?: string;
+  breedte?: string;
+  hoogte_voertuig?: string;
+  europese_voertuigcategorie?: string;
+  volgnummer_wijziging_eu_typegoedkeuring?: string;
+  wielbasis?: string;
+  zuinigheidsclassificatie?: string;
+  tellerstandoordeel?: string;
+  code_toelichting_tellerstandoordeel?: string;
+  tenaamstellen_mogelijk?: string;
+  wacht_op_keuren?: string;
+  registratie_datum_goedkeuring_afschrijvingsmoment_bpm?: string;
+  aerodyn_voorz?: string;
+  verl_cab_ind?: string;
 }
 
 interface VehicleFuelInfo {
@@ -123,6 +138,12 @@ interface VehicleFuelInfo {
   geluidsniveau_rijdend?: string;
   geluidsniveau_stationair?: string;
   roetuitstoot?: string;
+  // Additional fields found in real data
+  milieuklasse_eg_goedkeuring_licht?: string;
+  toerental_geluidsniveau?: string;
+  emis_deeltjes_type1_wltp?: string;
+  emissie_co2_gecombineerd_wltp?: string;
+  brandstof_verbruik_gecombineerd_wltp?: string;
 }
 
 /**
@@ -166,8 +187,13 @@ interface VehicleOwnershipInfo {
 interface VehicleAxesInfo {
   kenteken?: string;
   as_nummer?: string;
-  technisch_toegestaan_maximum_aslast?: string;
-  wettelijk_toegestaan_maximum_aslast?: string;
+  aantal_assen?: string;
+  aangedreven_as?: string;
+  plaatscode_as?: string;
+  spoorbreedte?: string;
+  technisch_toegestane_maximum_aslast?: string;
+  wettelijk_toegestane_maximum_aslast?: string;
+  afstand_tot_volgende_as_voertuig?: string;
   dt_laatste_update_in_rdw?: string;
 }
 
@@ -176,6 +202,8 @@ interface VehicleAxesInfo {
  */
 interface VehicleBodyInfo {
   kenteken?: string;
+  carrosserie_volgnummer?: string;
+  carrosserietype?: string;
   type_carrosserie_europese_omschrijving?: string;
   type_carrosserie?: string;
   dt_laatste_update_in_rdw?: string;
@@ -224,14 +252,20 @@ function formatVehicleInfo(
     `Model: ${vehicle.handelsbenaming || "Unknown"}`,
     `Variant: ${vehicle.variant || "Unknown"}`,
     `Version: ${vehicle.uitvoering || "Unknown"}`,
+    `European Category: ${vehicle.europese_voertuigcategorie || "Unknown"}`,
+    `Vehicle Type Code: ${vehicle.type || "Unknown"}`,
   ];
 
   const appearance = [
     `Primary Color: ${vehicle.eerste_kleur || "Unknown"}`,
-    ...(vehicle.tweede_kleur ? [`Secondary Color: ${vehicle.tweede_kleur}`] : []),
+    ...(vehicle.tweede_kleur && vehicle.tweede_kleur !== "Niet geregistreerd" ? [`Secondary Color: ${vehicle.tweede_kleur}`] : []),
     `Body Type: ${vehicle.inrichting || "Unknown"}`,
     `Number of Doors: ${vehicle.aantal_deuren || "Unknown"}`,
     `Number of Wheels: ${vehicle.aantal_wielen || "Unknown"}`,
+    `Length: ${vehicle.lengte ? `${vehicle.lengte} cm` : "Unknown"}`,
+    `Width: ${vehicle.breedte ? `${vehicle.breedte} cm` : "Unknown"}`,
+    `Height: ${vehicle.hoogte_voertuig ? `${vehicle.hoogte_voertuig} cm` : "Unknown"}`,
+    `Wheelbase: ${vehicle.wielbasis ? `${vehicle.wielbasis} cm` : "Unknown"}`,
   ];
 
   const capacity = [
@@ -244,6 +278,7 @@ function formatVehicleInfo(
     `Engine Displacement: ${vehicle.cilinderinhoud ? `${vehicle.cilinderinhoud} cc` : "Unknown"}`,
     `Net Max Power: ${vehicle.nettomaximumvermogen ? `${vehicle.nettomaximumvermogen} kW` : "Unknown"}`,
     `Power/Mass Ratio: ${vehicle.vermogen_massarijklaar ? `${vehicle.vermogen_massarijklaar} kW/kg` : "Unknown"}`,
+    `Max Construction Speed: ${vehicle.maximale_constructiesnelheid ? `${vehicle.maximale_constructiesnelheid} km/h` : "Unknown"}`,
     ...(vehicle.nominaal_continu_maximumvermogen ? [`Nominal Continuous Max Power: ${vehicle.nominaal_continu_maximumvermogen} kW`] : []),
   ];
 
@@ -263,7 +298,10 @@ function formatVehicleInfo(
     `First NL Registration: ${vehicle.datum_eerste_tenaamstelling_in_nederland || "Unknown"}`,
     ...(vehicle.datum_tenaamstelling ? [`Current Registration: ${vehicle.datum_tenaamstelling}`] : []),
     `Type Approval: ${vehicle.typegoedkeuringsnummer || vehicle.type_goedkeuring_nummer || "Unknown"}`,
-    `Vehicle Type Code: ${vehicle.type || "Unknown"}`,
+    `EU Type Approval Change Number: ${vehicle.volgnummer_wijziging_eu_typegoedkeuring || "Unknown"}`,
+    `Registration Possible: ${vehicle.tenaamstellen_mogelijk || "Unknown"}`,
+    `Pending Inspection: ${vehicle.wacht_op_keuren || "Unknown"}`,
+    ...(vehicle.registratie_datum_goedkeuring_afschrijvingsmoment_bpm ? [`BPM Approval Date: ${vehicle.registratie_datum_goedkeuring_afschrijvingsmoment_bpm}`] : []),
   ];
 
   const inspection = [
@@ -277,11 +315,15 @@ function formatVehicleInfo(
   ];
 
   const indicators = [
-    ...(vehicle.zuinigheidslabel ? [`Fuel Efficiency Label: ${vehicle.zuinigheidslabel}`] : []),
-    ...(vehicle.exportindicator ? [`Export Status: ${vehicle.exportindicator}`] : []),
-    ...(vehicle.taxi_indicator ? [`Taxi: ${vehicle.taxi_indicator}`] : []),
-    ...(vehicle.wam_verzekerd ? [`WAM Insured: ${vehicle.wam_verzekerd}`] : []),
-    ...(vehicle.openstaande_terugroepactie_indicator ? [`Open Recall: ${vehicle.openstaande_terugroepactie_indicator}`] : []),
+    `Fuel Efficiency Class: ${vehicle.zuinigheidsclassificatie || vehicle.zuinigheidslabel || "Unknown"}`,
+    `Export Status: ${vehicle.export_indicator || vehicle.exportindicator || "Unknown"}`,
+    `Taxi: ${vehicle.taxi_indicator || "Unknown"}`,
+    `WAM Insured: ${vehicle.wam_verzekerd || "Unknown"}`,
+    `Open Recall: ${vehicle.openstaande_terugroepactie_indicator || "Unknown"}`,
+    `Odometer Status: ${vehicle.tellerstandoordeel || "Unknown"}`,
+    ...(vehicle.code_toelichting_tellerstandoordeel ? [`Odometer Code: ${vehicle.code_toelichting_tellerstandoordeel}`] : []),
+    `Aerodynamic Equipment: ${vehicle.aerodyn_voorz || "Unknown"}`,
+    `Extended Cab: ${vehicle.verl_cab_ind || "Unknown"}`,
   ];
 
   // Format fuel and emissions data if available
@@ -292,10 +334,15 @@ function formatVehicleInfo(
         `Fuel Type ${index + 1}: ${fuel.brandstof_omschrijving || "Unknown"}`,
         `Emission Code: ${fuel.emissiecode_omschrijving || "Unknown"}`,
         `Emission Level: ${fuel.uitlaatemissieniveau || "Unknown"}`,
+        `Environmental Class: ${fuel.milieuklasse_eg_goedkeuring_licht || "Unknown"}`,
         `CO2 Emission Class: ${fuel.co2_emissieklasse || "Unknown"}`,
         `Max Power: ${fuel.nettomaximumvermogen || "Unknown"} kW`,
         `Sound Level (Driving): ${fuel.geluidsniveau_rijdend || "Unknown"} dB`,
         `Sound Level (Idle): ${fuel.geluidsniveau_stationair || "Unknown"} dB`,
+        `Sound Test RPM: ${fuel.toerental_geluidsniveau || "Unknown"}`,
+        `CO2 Combined (WLTP): ${fuel.emissie_co2_gecombineerd_wltp || "Unknown"} g/km`,
+        `Fuel Consumption Combined (WLTP): ${fuel.brandstof_verbruik_gecombineerd_wltp || "Unknown"} l/100km`,
+        `Particle Emissions Type 1 (WLTP): ${fuel.emis_deeltjes_type1_wltp || "Unknown"} mg/km`,
         `Soot Emission: ${fuel.roetuitstoot || "Unknown"}`,
       ];
       fuelEmissions.push(fuelInfo.join("\n"));
@@ -350,11 +397,18 @@ function formatVehicleInfo(
   // Format axle data
   const axleInfo: string[] = [];
   if (axesData && axesData.length > 0) {
+    const totalAxles = axesData[0].aantal_assen || "Unknown";
+    axleInfo.push(`Total Number of Axles: ${totalAxles}`);
+    
     axesData.forEach((axle, index) => {
       const info = [
         `Axle ${axle.as_nummer || index + 1}:`,
-        `Technical Max Load: ${axle.technisch_toegestaan_maximum_aslast || "Unknown"} kg`,
-        `Legal Max Load: ${axle.wettelijk_toegestaan_maximum_aslast || "Unknown"} kg`,
+        `Driven Axle: ${axle.aangedreven_as === "J" ? "Yes" : axle.aangedreven_as === "N" ? "No" : "Unknown"}`,
+        `Position Code: ${axle.plaatscode_as || "Unknown"}`,
+        `Track Width: ${axle.spoorbreedte || "Unknown"} cm`,
+        `Technical Max Load: ${axle.technisch_toegestane_maximum_aslast || "Unknown"} kg`,
+        `Legal Max Load: ${axle.wettelijk_toegestane_maximum_aslast || "Unknown"} kg`,
+        `Distance to Next Axle: ${axle.afstand_tot_volgende_as_voertuig || "Unknown"} cm`,
       ];
       axleInfo.push(info.join("\n"));
     });
@@ -365,7 +419,8 @@ function formatVehicleInfo(
   if (bodyData && bodyData.length > 0) {
     bodyData.forEach((body, index) => {
       const info = [
-        `Body Type ${index + 1}:`,
+        `Body Configuration ${index + 1}:`,
+        `Carrosserie Type: ${body.carrosserietype || "Unknown"}`,
         `European Description: ${body.type_carrosserie_europese_omschrijving || "Unknown"}`,
         `Body Type: ${body.type_carrosserie || "Unknown"}`,
       ];
@@ -458,37 +513,17 @@ server.tool(
       // Fetch all available RDW data in parallel for better performance
       const [
         fuelData,
-        apkData,
-        recallData,
-        ownershipData,
         axesData,
-        bodyData,
-        colorData,
-        defectData
+        bodyData
       ] = await Promise.all([
         // Fuel and emissions data
         makeRDWRequest<VehicleFuelInfo[]>("8ys7-d773", { kenteken: cleanKenteken }),
-        
-        // APK inspection data
-        makeRDWRequest<VehicleAPKInfo[]>("2wi1-7t2k", { kenteken: cleanKenteken }),
-        
-        // Recalls and safety actions data
-        makeRDWRequest<VehicleRecallInfo[]>("j3wq-qf4v", { kenteken: cleanKenteken }),
-        
-        // Registration/ownership changes
-        makeRDWRequest<VehicleOwnershipInfo[]>("m9d7-ebf2", { kenteken: cleanKenteken }),
         
         // Axle data
         makeRDWRequest<VehicleAxesInfo[]>("3huj-srit", { kenteken: cleanKenteken }),
         
         // Body/carrosserie data  
-        makeRDWRequest<VehicleBodyInfo[]>("vezc-m2t6", { kenteken: cleanKenteken }),
-        
-        // Additional color data
-        makeRDWRequest<VehicleColorInfo[]>("t8be-g8yr", { kenteken: cleanKenteken }),
-        
-        // Vehicle defects data
-        makeRDWRequest<VehicleDefectInfo[]>("hx2c-gt41", { kenteken: cleanKenteken })
+        makeRDWRequest<VehicleBodyInfo[]>("vezc-m2t6", { kenteken: cleanKenteken })
       ]);
       
       // If fuel data is available, use the power from there for consistency
@@ -499,13 +534,13 @@ server.tool(
       const formattedInfo = formatVehicleInfo(
         vehicle, 
         fuelData || undefined,
-        apkData || undefined,
-        recallData || undefined,
-        ownershipData || undefined,
+        undefined, // apkData - endpoint doesn't exist
+        undefined, // recallData - endpoint doesn't exist  
+        undefined, // ownershipData - same as main dataset
         axesData || undefined,
         bodyData || undefined,
-        colorData || undefined,
-        defectData || undefined
+        undefined, // colorData - endpoint doesn't exist
+        undefined  // defectData - endpoint doesn't exist
       );
 
       return {
