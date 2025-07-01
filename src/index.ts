@@ -422,7 +422,7 @@ function formatVehicleInfo(
         `Body Configuration ${index + 1}:`,
         `Carrosserie Type: ${body.carrosserietype || "Unknown"}`,
         `European Description: ${body.type_carrosserie_europese_omschrijving || "Unknown"}`,
-        `Body Type: ${body.type_carrosserie || "Unknown"}`,
+        // Note: Body Type is already shown in Appearance section from main vehicle data
       ];
       bodyInfo.push(info.join("\n"));
     });
