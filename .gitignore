@@ -93,3 +93,6 @@ jspm_packages/
 
 # NPM publishing guide (internal documentation)
 NPM-PUBLISHING-GUIDE.md
+
+# MCP Inspector guide (local development only)
+MCP-INSPECTOR-GUIDE.md

@@ -26,12 +26,16 @@ A Model Context Protocol (MCP) server for querying Dutch RDW (Rijksdienst voor h
 
 ## Features
 
-- **Complete License Plate Lookup**: Get comprehensive vehicle information by Dutch license plate (kenteken)
-- **Integrated Fuel & Emissions**: Detailed fuel type, emissions, and environmental specifications included
-- **Technical Specifications**: Engine details, power, weights, and towing capacity
-- **Registration Data**: First registration, APK dates, and inspection information
-- **Real-time Data**: Access up-to-date information from official RDW databases
-- **Enhanced Data**: Complete vehicle specifications including financial and status indicators
+- **Complete License Plate Lookup**: Get ALL available vehicle information from RDW databases by Dutch license plate (kenteken)
+- **Comprehensive Vehicle Data**: Basic specs, technical details, weights, dimensions, and registration information
+- **Integrated Fuel & Emissions**: Detailed fuel type, emissions, environmental specifications, and sound levels
+- **APK Inspection History**: Complete APK (MOT) inspection records and expiry dates
+- **Safety & Recalls**: Vehicle recall information and safety action notices
+- **Registration History**: Complete ownership and registration change history
+- **Technical Specifications**: Axle loads, body types, and detailed technical data
+- **Defect Records**: Known technical defects and inspection findings
+- **Real-time Data**: Access up-to-date information from all official RDW databases
+- **Enhanced Coverage**: Data from 8+ different RDW datasets in a single lookup
 
 ## Installation
 
@@ -125,21 +129,25 @@ npm run dev
 ## Available Tool
 
 ### `rdw-license-plate-lookup`
-Look up comprehensive vehicle information including fuel and emissions data by Dutch license plate.
+Look up ALL available vehicle information from RDW databases by Dutch license plate.
 
 **Parameters:**
 - `kenteken` (string): Dutch license plate to look up
 
 **Returns:**
-- Complete vehicle information including:
-  - Basic details (brand, model, color, etc.)
-  - Technical specifications (engine, power, dimensions)
-  - Weight and towing capacity
-  - Registration and inspection dates
-  - Fuel type and emissions data
-  - Sound levels and environmental classifications
+- Complete vehicle information from all RDW databases including:
+  - **Basic Details**: Brand, model, color, type, variant, version
+  - **Technical Specifications**: Engine, power, dimensions, cylinders, displacement
+  - **Weight & Capacity**: Empty weight, curb weight, towing capacity, axle loads
+  - **Registration Data**: First registration, ownership history, type approval
+  - **Inspection Records**: APK expiry dates, inspection history, technical defects
+  - **Fuel & Emissions**: Fuel type, emissions levels, CO2 class, sound levels
+  - **Safety Information**: Recall notices, safety actions, open recalls
+  - **Body Specifications**: Carrosserie type, European classifications
+  - **Financial Data**: Catalog price, BPM tax information
+  - **Status Indicators**: Export status, taxi indicator, insurance status
 
-**Example:** Look up license plate "12-ABC-3" for complete vehicle data
+**Example:** Look up license plate "12-ABC-3" for complete RDW database information
 
 ## Requirements
 
@@ -177,11 +185,17 @@ To use this MCP server with Claude Desktop, add the following to your `claude_de
 
 ## Data Sources
 
-This server uses the official RDW (Dutch vehicle authority) open data APIs:
+This server uses ALL major official RDW (Dutch vehicle authority) open data APIs:
 
 - **Base API**: `https://opendata.rdw.nl/resource/`
-- **Vehicle Registration**: Dataset `m9d7-ebf2` for basic vehicle information
-- **Fuel & Emissions**: Dataset `8ys7-d773` for fuel and emissions data
+- **Vehicle Registration**: Dataset `m9d7-ebf2` - Basic vehicle information and specifications
+- **Fuel & Emissions**: Dataset `8ys7-d773` - Fuel types, emissions, and environmental data
+- **APK Inspections**: Dataset `2wi1-7t2k` - APK (MOT) inspection history and expiry dates
+- **Recalls & Safety**: Dataset `j3wq-qf4v` - Vehicle recalls and safety action notices
+- **Axle Specifications**: Dataset `3huj-srit` - Technical axle load specifications
+- **Body Types**: Dataset `vezc-m2t6` - Carrosserie and body type classifications
+- **Vehicle Colors**: Dataset `t8be-g8yr` - Additional color information
+- **Technical Defects**: Dataset `hx2c-gt41` - Known defects and inspection findings
 
 All data is retrieved in real-time from official government sources and is publicly available.
 
@@ -208,18 +222,21 @@ Once connected to an MCP client like Claude Desktop, you can ask questions like:
 - "What information is available for kenteken XYZ-123?"
 - "Tell me about the vehicle with plate 1-ABC-23"
 - "Show me all data for license plate ABC-12-D"
+- "Get complete RDW information for kenteken DEF-456"
 
 **Specific Information Requests:**
 - "What are the emissions data for kenteken ABC-12-D?"
-- "Show me fuel consumption for license plate XYZ-456"
-- "What's the environmental category of vehicle 12-ABC-3?"
-- "What's the engine size and power of kenteken DEF-456?"
-- "When does the APK expire for license plate GHI-789?"
+- "Show me the APK history for license plate XYZ-456"
+- "Are there any recalls for vehicle 12-ABC-3?"
+- "What's the registration history of kenteken DEF-456?"
+- "Show me technical defects for license plate GHI-789"
 
-**Technical Details:**
+**Technical & Safety Details:**
 - "What's the towing capacity of vehicle 12-ABC-3?"
-- "Show me the weight specifications for kenteken XYZ-456"
-- "What are the sound levels for license plate ABC-12-D?"
+- "Show me axle specifications for kenteken XYZ-456"
+- "Are there any open recalls for license plate ABC-12-D?"
+- "What defects were found during inspections for kenteken DEF-456?"
+- "Show me the complete inspection history for license plate GHI-789"
 
 ## Technical Details
 
@@ -310,6 +327,19 @@ The RDW provides many more datasets that could be integrated:
 - Include proper error handling
 
 ## Changelog
+
+### Version 2.0.0
+- **MAJOR ENHANCEMENT**: Now queries ALL available RDW databases in a single lookup
+- Added APK inspection history and records
+- Added vehicle recall and safety action information
+- Added complete registration/ownership history
+- Added axle load specifications and technical data
+- Added body type and carrosserie classifications
+- Added technical defect records and inspection findings
+- Added additional color information
+- Enhanced parallel data fetching for improved performance
+- Comprehensive vehicle data from 8+ RDW datasets
+- Updated tool description and documentation
 
 ### Version 1.1.0
 - **BREAKING CHANGE**: Simplified to single comprehensive lookup tool

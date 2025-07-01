@@ -126,9 +126,97 @@ interface VehicleFuelInfo {
 }
 
 /**
- * Format vehicle information for display (including fuel/emissions data)
+ * APK (MOT) inspection data
  */
-function formatVehicleInfo(vehicle: VehicleBaseInfo, fuelData?: VehicleFuelInfo[]): string {
+interface VehicleAPKInfo {
+  kenteken?: string;
+  vervaldatum_apk?: string;
+  dt_laatste_update_in_rdw?: string;
+  vervaldatum_apk_dt?: string;
+  aantal_datums_apk?: string;
+}
+
+/**
+ * Recalls and defects data
+ */
+interface VehicleRecallInfo {
+  kenteken?: string;
+  referentiecode_rdw?: string;
+  datum_terugroepactie?: string;
+  code_gebrek?: string;
+  omschrijving_gebrek?: string;
+  datum_vanaf_eerste_toepassing_terugroepactie?: string;
+  datum_tot_eerste_toepassing_terugroepactie?: string;
+  dt_laatste_update_in_rdw?: string;
+}
+
+/**
+ * Vehicle ownership/registration changes
+ */
+interface VehicleOwnershipInfo {
+  kenteken?: string;
+  datum_tenaamstelling?: string;
+  datum_eerste_tenaamstelling?: string;
+  dt_laatste_update_in_rdw?: string;
+}
+
+/**
+ * Vehicle axes/technical data
+ */
+interface VehicleAxesInfo {
+  kenteken?: string;
+  as_nummer?: string;
+  technisch_toegestaan_maximum_aslast?: string;
+  wettelijk_toegestaan_maximum_aslast?: string;
+  dt_laatste_update_in_rdw?: string;
+}
+
+/**
+ * Vehicle body/carrosserie data
+ */
+interface VehicleBodyInfo {
+  kenteken?: string;
+  type_carrosserie_europese_omschrijving?: string;
+  type_carrosserie?: string;
+  dt_laatste_update_in_rdw?: string;
+}
+
+/**
+ * Vehicle colors
+ */
+interface VehicleColorInfo {
+  kenteken?: string;
+  kleur?: string;
+  dt_laatste_update_in_rdw?: string;
+}
+
+/**
+ * Vehicle defects data
+ */
+interface VehicleDefectInfo {
+  kenteken?: string;
+  gebrek_identificatie?: string;
+  datum_constatering_gebrek?: string;
+  locatie_gebrek?: string;
+  code_gebrek?: string;
+  omschrijving_gebrek?: string;
+  dt_laatste_update_in_rdw?: string;
+}
+
+/**
+ * Format vehicle information for display (including all available RDW data)
+ */
+function formatVehicleInfo(
+  vehicle: VehicleBaseInfo, 
+  fuelData?: VehicleFuelInfo[], 
+  apkData?: VehicleAPKInfo[],
+  recallData?: VehicleRecallInfo[],
+  ownershipData?: VehicleOwnershipInfo[],
+  axesData?: VehicleAxesInfo[],
+  bodyData?: VehicleBodyInfo[],
+  colorData?: VehicleColorInfo[],
+  defectData?: VehicleDefectInfo[]
+): string {
   const basicInfo = [
     `License Plate: ${vehicle.kenteken || "Unknown"}`,
     `Vehicle Type: ${vehicle.voertuigsoort || "Unknown"}`,
@@ -214,6 +302,101 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo, fuelData?: VehicleFuelInfo[
     });
   }
 
+  // Format APK (MOT) inspection data
+  const apkInfo: string[] = [];
+  if (apkData && apkData.length > 0) {
+    apkData.forEach((apk, index) => {
+      const info = [
+        `APK Record ${index + 1}:`,
+        `Expiry Date: ${apk.vervaldatum_apk || "Unknown"}`,
+        `Last Updated: ${apk.dt_laatste_update_in_rdw || "Unknown"}`,
+        `Number of APK Dates: ${apk.aantal_datums_apk || "Unknown"}`,
+      ];
+      apkInfo.push(info.join("\n"));
+    });
+  }
+
+  // Format recall/defect data
+  const recallInfo: string[] = [];
+  if (recallData && recallData.length > 0) {
+    recallData.forEach((recall, index) => {
+      const info = [
+        `Recall ${index + 1}:`,
+        `Reference Code: ${recall.referentiecode_rdw || "Unknown"}`,
+        `Recall Date: ${recall.datum_terugroepactie || "Unknown"}`,
+        `Defect Code: ${recall.code_gebrek || "Unknown"}`,
+        `Defect Description: ${recall.omschrijving_gebrek || "Unknown"}`,
+        `Valid From: ${recall.datum_vanaf_eerste_toepassing_terugroepactie || "Unknown"}`,
+        `Valid Until: ${recall.datum_tot_eerste_toepassing_terugroepactie || "Unknown"}`,
+      ];
+      recallInfo.push(info.join("\n"));
+    });
+  }
+
+  // Format ownership/registration history
+  const ownershipInfo: string[] = [];
+  if (ownershipData && ownershipData.length > 0) {
+    ownershipData.forEach((ownership, index) => {
+      const info = [
+        `Registration ${index + 1}:`,
+        `Registration Date: ${ownership.datum_tenaamstelling || "Unknown"}`,
+        `First Registration Date: ${ownership.datum_eerste_tenaamstelling || "Unknown"}`,
+        `Last Updated: ${ownership.dt_laatste_update_in_rdw || "Unknown"}`,
+      ];
+      ownershipInfo.push(info.join("\n"));
+    });
+  }
+
+  // Format axle data
+  const axleInfo: string[] = [];
+  if (axesData && axesData.length > 0) {
+    axesData.forEach((axle, index) => {
+      const info = [
+        `Axle ${axle.as_nummer || index + 1}:`,
+        `Technical Max Load: ${axle.technisch_toegestaan_maximum_aslast || "Unknown"} kg`,
+        `Legal Max Load: ${axle.wettelijk_toegestaan_maximum_aslast || "Unknown"} kg`,
+      ];
+      axleInfo.push(info.join("\n"));
+    });
+  }
+
+  // Format body/carrosserie data
+  const bodyInfo: string[] = [];
+  if (bodyData && bodyData.length > 0) {
+    bodyData.forEach((body, index) => {
+      const info = [
+        `Body Type ${index + 1}:`,
+        `European Description: ${body.type_carrosserie_europese_omschrijving || "Unknown"}`,
+        `Body Type: ${body.type_carrosserie || "Unknown"}`,
+      ];
+      bodyInfo.push(info.join("\n"));
+    });
+  }
+
+  // Format additional color data
+  const additionalColorInfo: string[] = [];
+  if (colorData && colorData.length > 0) {
+    colorData.forEach((color, index) => {
+      additionalColorInfo.push(`Color ${index + 1}: ${color.kleur || "Unknown"}`);
+    });
+  }
+
+  // Format defect data
+  const defectInfo: string[] = [];
+  if (defectData && defectData.length > 0) {
+    defectData.forEach((defect, index) => {
+      const info = [
+        `Defect ${index + 1}:`,
+        `ID: ${defect.gebrek_identificatie || "Unknown"}`,
+        `Date Found: ${defect.datum_constatering_gebrek || "Unknown"}`,
+        `Location: ${defect.locatie_gebrek || "Unknown"}`,
+        `Code: ${defect.code_gebrek || "Unknown"}`,
+        `Description: ${defect.omschrijving_gebrek || "Unknown"}`,
+      ];
+      defectInfo.push(info.join("\n"));
+    });
+  }
+
   const sections = [
     `BASIC INFORMATION:\n${basicInfo.join("\n")}`,
     `APPEARANCE:\n${appearance.join("\n")}`,
@@ -225,6 +408,13 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo, fuelData?: VehicleFuelInfo[
     ...(financial.length > 0 ? [`FINANCIAL:\n${financial.join("\n")}`] : []),
     ...(indicators.length > 0 ? [`STATUS INDICATORS:\n${indicators.join("\n")}`] : []),
     ...(fuelEmissions.length > 0 ? [`FUEL & EMISSIONS:\n${fuelEmissions.join("\n---\n")}`] : []),
+    ...(apkInfo.length > 0 ? [`APK INSPECTION HISTORY:\n${apkInfo.join("\n---\n")}`] : []),
+    ...(recallInfo.length > 0 ? [`RECALLS & SAFETY ACTIONS:\n${recallInfo.join("\n---\n")}`] : []),
+    ...(ownershipInfo.length > 0 ? [`REGISTRATION HISTORY:\n${ownershipInfo.join("\n---\n")}`] : []),
+    ...(axleInfo.length > 0 ? [`AXLE SPECIFICATIONS:\n${axleInfo.join("\n---\n")}`] : []),
+    ...(bodyInfo.length > 0 ? [`BODY SPECIFICATIONS:\n${bodyInfo.join("\n---\n")}`] : []),
+    ...(additionalColorInfo.length > 0 ? [`ADDITIONAL COLORS:\n${additionalColorInfo.join("\n")}`] : []),
+    ...(defectInfo.length > 0 ? [`TECHNICAL DEFECTS:\n${defectInfo.join("\n---\n")}`] : []),
     `Last Odometer Reading: ${vehicle.jaar_laatste_registratie_tellerstand || "Unknown"}`,
   ];
   
@@ -235,10 +425,10 @@ function formatVehicleInfo(vehicle: VehicleBaseInfo, fuelData?: VehicleFuelInfo[
  * Register RDW tool
  */
 
-// License plate lookup with complete vehicle and fuel/emissions data
+// License plate lookup with ALL available RDW data
 server.tool(
   "rdw-license-plate-lookup",
-  "Look up comprehensive Dutch vehicle information including fuel and emissions data by license plate",
+  "Look up ALL available Dutch vehicle information from RDW databases including vehicle specs, fuel/emissions, APK history, recalls, ownership history, technical defects, and more",
   {
     kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
   },
@@ -265,23 +455,64 @@ server.tool(
 
       const vehicle = vehicleData[0];
       
-      // Get fuel/emissions data
-      const fuelData = await makeRDWRequest<VehicleFuelInfo[]>("8ys7-d773", {
-        kenteken: cleanKenteken,
-      });
+      // Fetch all available RDW data in parallel for better performance
+      const [
+        fuelData,
+        apkData,
+        recallData,
+        ownershipData,
+        axesData,
+        bodyData,
+        colorData,
+        defectData
+      ] = await Promise.all([
+        // Fuel and emissions data
+        makeRDWRequest<VehicleFuelInfo[]>("8ys7-d773", { kenteken: cleanKenteken }),
+        
+        // APK inspection data
+        makeRDWRequest<VehicleAPKInfo[]>("2wi1-7t2k", { kenteken: cleanKenteken }),
+        
+        // Recalls and safety actions data
+        makeRDWRequest<VehicleRecallInfo[]>("j3wq-qf4v", { kenteken: cleanKenteken }),
+        
+        // Registration/ownership changes
+        makeRDWRequest<VehicleOwnershipInfo[]>("m9d7-ebf2", { kenteken: cleanKenteken }),
+        
+        // Axle data
+        makeRDWRequest<VehicleAxesInfo[]>("3huj-srit", { kenteken: cleanKenteken }),
+        
+        // Body/carrosserie data  
+        makeRDWRequest<VehicleBodyInfo[]>("vezc-m2t6", { kenteken: cleanKenteken }),
+        
+        // Additional color data
+        makeRDWRequest<VehicleColorInfo[]>("t8be-g8yr", { kenteken: cleanKenteken }),
+        
+        // Vehicle defects data
+        makeRDWRequest<VehicleDefectInfo[]>("hx2c-gt41", { kenteken: cleanKenteken })
+      ]);
       
       // If fuel data is available, use the power from there for consistency
       if (fuelData && fuelData.length > 0 && fuelData[0].nettomaximumvermogen) {
         vehicle.nettomaximumvermogen = fuelData[0].nettomaximumvermogen;
       }
       
-      const formattedInfo = formatVehicleInfo(vehicle, fuelData || undefined);
+      const formattedInfo = formatVehicleInfo(
+        vehicle, 
+        fuelData || undefined,
+        apkData || undefined,
+        recallData || undefined,
+        ownershipData || undefined,
+        axesData || undefined,
+        bodyData || undefined,
+        colorData || undefined,
+        defectData || undefined
+      );
 
       return {
         content: [
           {
             type: "text",
-            text: `Complete Vehicle Information for ${cleanKenteken}:\n\n${formattedInfo}`,
+            text: `COMPLETE RDW Database Information for ${cleanKenteken}:\n\n${formattedInfo}`,
           },
         ],
       };
