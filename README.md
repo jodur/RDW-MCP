@@ -5,6 +5,10 @@
 
 A Model Context Protocol (MCP) server for querying Dutch RDW (Rijksdienst voor het Wegverkeer) vehicle registration data. This server provides tools to look up vehicle information, fuel/emissions data, and search vehicles by brand and model using the official RDW open data API.
 
+<a href="https://glama.ai/mcp/servers/@jodur/RDW-MCP">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@jodur/RDW-MCP/badge" alt="RDW Server MCP server" />
+</a>
+
 ## Quick Start
 
 1. **Install globally:**
