@@ -7,22 +7,25 @@ A Model Context Protocol (MCP) server for querying Dutch RDW (Rijksdienst voor h
 
 ## Quick Start
 
-1. **Install globally:**
-   ```bash
-   npm install -g rdw-mcp-server
-   ```
+**Choose your preferred method:**
 
-2. **Test the installation:**
-   ```bash
-   rdw-mcp
-   ```
-   (Press Ctrl+C to stop)
+- **Global Install** (recommended): `npm install -g rdw-mcp-server` → `rdw-mcp`
+- **NPX** (no install): `npx rdw-mcp-server` 
+- **Local Dev**: Clone repo → `npm install` → `npm run build` → `node build/index.js`
 
-3. **Add to Claude Desktop** (see Configuration section below)
+**Test the installation:**
+```bash
+rdw-mcp        # if globally installed
+# OR
+npx rdw-mcp-server  # if using npx
+```
+(Press Ctrl+C to stop)
 
-4. **Start asking questions like:**
-   - "Look up license plate 12-ABC-3"
-   - "Show me BMW vehicles"
+**Add to Claude Desktop** (see Configuration section below)
+
+**Start asking questions like:**
+- "Look up license plate 12-ABC-3"
+- "Show me BMW vehicles"
 
 ## Features
 
@@ -51,26 +54,22 @@ After global installation, you can run the server directly:
 rdw-mcp
 ```
 
-### Local Installation (For development or custom usage)
-
-```bash
-npm install rdw-mcp-server
-```
-
-Then run with:
+### Using NPX (Run without installing)
 
 ```bash
 npx rdw-mcp-server
 ```
 
-### From Source (Development)
+This runs the package directly without installing it globally.
+
+### From Source (Local Development)
 
 ```bash
 git clone https://github.com/yourusername/rdw-mcp-server.git
 cd rdw-mcp-server
 npm install
 npm run build
-npm start
+node build/index.js
 ```
 
 ## Usage
@@ -145,10 +144,16 @@ Add to your MCP client configuration (e.g., Claude Desktop):
 }
 ```
 
-### Direct Node.js Usage
+### Local Development Mode
+
+For local development from source:
 
 ```bash
-npx rdw-mcp-server
+git clone https://github.com/yourusername/rdw-mcp-server.git
+cd rdw-mcp-server
+npm install
+npm run build
+node build/index.js
 ```
 
 ### Development Mode
