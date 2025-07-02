@@ -18,7 +18,7 @@ import express, { Request, Response } from "express";
 
 // RDW API Configuration
 const RDW_API_BASE = "https://opendata.rdw.nl/resource";
-const USER_AGENT = "RDW-MCP-Server/2.1.0";
+const USER_AGENT = "RDW-MCP-Server/2.2.0";
 
 /**
  * Helper function for making RDW API requests
@@ -565,7 +565,7 @@ function setupRDWTools(server: McpServer) {
 function createRDWServer(): McpServer {
   const server = new McpServer({
     name: "rdw-mcp-server",
-    version: "2.1.0",
+    version: "2.2.0",
   });
   
   // Setup all RDW tools
@@ -661,7 +661,7 @@ async function startHTTPServer(port: number = 3000) {
     res.json({ 
       status: 'healthy', 
       server: 'rdw-mcp-server',
-      version: '2.1.0',
+      version: '2.2.0',
       transport: 'streamable-http-stateless'
     });
   });
