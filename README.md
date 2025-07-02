@@ -79,11 +79,44 @@ npm start
 
 After global installation, start the MCP server:
 
+**Stdio Mode (Default):**
 ```bash
 rdw-mcp
 ```
 
-The server will start and listen on stdio for MCP protocol messages.
+**HTTP Mode:**
+```bash
+rdw-mcp --http          # Runs on port 3000
+rdw-mcp --http --port=8080  # Custom port
+```
+
+The server supports both stdio and HTTP transports:
+- **Stdio**: For direct command-line and Claude Desktop integration
+- **HTTP**: For remote access, web integrations, and scalable deployments
+
+### HTTP Transport Features
+
+When running in HTTP mode (`--http`), the server provides:
+
+- **MCP Endpoint**: `POST /mcp` - Main MCP protocol endpoint
+- **Health Check**: `GET /health` - Server status and version info
+- **CORS Support**: Cross-origin requests enabled for web integrations
+- **Stateless Design**: No session management, perfect for scaling
+- **Error Handling**: Proper HTTP status codes and JSON-RPC error responses
+
+**Example HTTP Usage:**
+```bash
+# Start HTTP server
+rdw-mcp --http --port=3000
+
+# Health check
+curl http://localhost:3000/health
+
+# MCP requests (requires proper JSON-RPC format)
+curl -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
 
 ### In MCP Client Configuration
 
@@ -362,6 +395,17 @@ The RDW provides many more datasets that could be integrated:
 - Include proper error handling
 
 ## Changelog
+
+### Version 2.1.0
+- **NEW TRANSPORT**: Added Streamable HTTP transport support (stateless)
+- **SDK Compliance**: Updated to modern MCP TypeScript SDK patterns  
+- **HTTP Features**: Express.js server with `/mcp` endpoint and `/health` check
+- **Command Line**: Added `--http` and `--port=N` arguments for HTTP mode
+- **CORS Support**: Cross-origin requests enabled for web integrations
+- **Stateless Design**: New server instance per request, perfect for scaling
+- **Modern API**: Updated from deprecated `server.tool()` to `server.registerTool()`
+- **Enhanced Structure**: Better code organization with separated functions
+- **Dual Transport**: Supports both stdio (default) and HTTP transports
 
 ### Version 2.0.0
 - **MAJOR ENHANCEMENT**: Now queries ALL available RDW databases in a single lookup

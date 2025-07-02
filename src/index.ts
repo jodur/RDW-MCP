@@ -6,23 +6,19 @@
  * Model Context Protocol server for querying Dutch RDW (Rijksdienst voor het Wegverkeer) 
  * vehicle registration data. Provides tools for license plate lookups, vehicle information 
  * retrieval, and technical specifications.
+ * 
+ * Supports both stdio and HTTP transports.
  */
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
+import express, { Request, Response } from "express";
 
 // RDW API Configuration
 const RDW_API_BASE = "https://opendata.rdw.nl/resource";
 const USER_AGENT = "RDW-MCP-Server/2.1.0";
-
-/**
- * Create server instance with RDW capabilities
- */
-const server = new McpServer({
-  name: "rdw-mcp-server",
-  version: "2.1.0",
-});
 
 /**
  * Helper function for making RDW API requests
@@ -475,99 +471,232 @@ function formatVehicleInfo(
 /**
  * Register RDW license plate lookup tool using modern SDK patterns
  */
-server.registerTool(
-  "rdw-license-plate-lookup",
-  {
-    title: "RDW License Plate Lookup",
-    description: "Look up ALL available Dutch vehicle information from RDW databases including vehicle specs, fuel/emissions, APK history, recalls, ownership history, technical defects, and more",
-    inputSchema: {
-      kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
-    }
-  },
-  async ({ kenteken }) => {
-    // Clean up the license plate (remove spaces and hyphens, convert to uppercase)
-    const cleanKenteken = kenteken.replace(/[\s-]+/g, "").toUpperCase();
-    
-    try {
-      // Get basic vehicle information
-      const vehicleData = await makeRDWRequest<VehicleBaseInfo[]>("m9d7-ebf2", {
-        kenteken: cleanKenteken,
-      });
+function setupRDWTools(server: McpServer) {
+  server.registerTool(
+    "rdw-license-plate-lookup",
+    {
+      title: "RDW License Plate Lookup",
+      description: "Look up ALL available Dutch vehicle information from RDW databases including vehicle specs, fuel/emissions, APK history, recalls, ownership history, technical defects, and more",
+      inputSchema: {
+        kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
+      }
+    },
+    async ({ kenteken }) => {
+      // Clean up the license plate (remove spaces and hyphens, convert to uppercase)
+      const cleanKenteken = kenteken.replace(/[\s-]+/g, "").toUpperCase();
+      
+      try {
+        // Get basic vehicle information
+        const vehicleData = await makeRDWRequest<VehicleBaseInfo[]>("m9d7-ebf2", {
+          kenteken: cleanKenteken,
+        });
 
-      if (!vehicleData || vehicleData.length === 0) {
+        if (!vehicleData || vehicleData.length === 0) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `No vehicle found for license plate: ${cleanKenteken}`,
+              },
+            ],
+          };
+        }
+
+        const vehicle = vehicleData[0];
+        
+        // Fetch all available RDW data in parallel for better performance
+        const [
+          fuelData,
+          axesData,
+          bodyData
+        ] = await Promise.all([
+          // Fuel and emissions data
+          makeRDWRequest<VehicleFuelInfo[]>("8ys7-d773", { kenteken: cleanKenteken }),
+          
+          // Axle data
+          makeRDWRequest<VehicleAxesInfo[]>("3huj-srit", { kenteken: cleanKenteken }),
+          
+          // Body/carrosserie data  
+          makeRDWRequest<VehicleBodyInfo[]>("vezc-m2t6", { kenteken: cleanKenteken })
+        ]);
+        
+        // If fuel data is available, use the power from there for consistency
+        if (fuelData && fuelData.length > 0 && fuelData[0].nettomaximumvermogen) {
+          vehicle.nettomaximumvermogen = fuelData[0].nettomaximumvermogen;
+        }
+        
+        const formattedInfo = formatVehicleInfo(
+          vehicle, 
+          fuelData || undefined,
+          undefined, // apkData - endpoint doesn't exist
+          undefined, // recallData - endpoint doesn't exist  
+          undefined, // ownershipData - same as main dataset
+          axesData || undefined,
+          bodyData || undefined,
+          undefined, // colorData - endpoint doesn't exist
+          undefined  // defectData - endpoint doesn't exist
+        );
+
         return {
           content: [
             {
               type: "text",
-              text: `No vehicle found for license plate: ${cleanKenteken}`,
+              text: `COMPLETE RDW Database Information for ${cleanKenteken}:\n\n${formattedInfo}`,
+            },
+          ],
+        };
+      } catch (error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error retrieving vehicle information: ${error instanceof Error ? error.message : "Unknown error"}`,
             },
           ],
         };
       }
-
-      const vehicle = vehicleData[0];
-      
-      // Fetch all available RDW data in parallel for better performance
-      const [
-        fuelData,
-        axesData,
-        bodyData
-      ] = await Promise.all([
-        // Fuel and emissions data
-        makeRDWRequest<VehicleFuelInfo[]>("8ys7-d773", { kenteken: cleanKenteken }),
-        
-        // Axle data
-        makeRDWRequest<VehicleAxesInfo[]>("3huj-srit", { kenteken: cleanKenteken }),
-        
-        // Body/carrosserie data  
-        makeRDWRequest<VehicleBodyInfo[]>("vezc-m2t6", { kenteken: cleanKenteken })
-      ]);
-      
-      // If fuel data is available, use the power from there for consistency
-      if (fuelData && fuelData.length > 0 && fuelData[0].nettomaximumvermogen) {
-        vehicle.nettomaximumvermogen = fuelData[0].nettomaximumvermogen;
-      }
-      
-      const formattedInfo = formatVehicleInfo(
-        vehicle, 
-        fuelData || undefined,
-        undefined, // apkData - endpoint doesn't exist
-        undefined, // recallData - endpoint doesn't exist  
-        undefined, // ownershipData - same as main dataset
-        axesData || undefined,
-        bodyData || undefined,
-        undefined, // colorData - endpoint doesn't exist
-        undefined  // defectData - endpoint doesn't exist
-      );
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: `COMPLETE RDW Database Information for ${cleanKenteken}:\n\n${formattedInfo}`,
-          },
-        ],
-      };
-    } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error retrieving vehicle information: ${error instanceof Error ? error.message : "Unknown error"}`,
-          },
-        ],
-      };
-    }
-  },
-);
+    },
+  );
+}
 
 /**
- * Main function to run the server
+ * Create and configure a new RDW MCP Server instance
  */
-async function main() {
+function createRDWServer(): McpServer {
+  const server = new McpServer({
+    name: "rdw-mcp-server",
+    version: "2.1.0",
+  });
+  
+  // Setup all RDW tools
+  setupRDWTools(server);
+  
+  return server;
+}
+
+/**
+ * Start HTTP server with streamable transport (stateless)
+ */
+async function startHTTPServer(port: number = 3000) {
+  const app = express();
+  app.use(express.json());
+
+  // Enable CORS for remote usage
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, mcp-session-id');
+    res.header('Access-Control-Expose-Headers', 'mcp-session-id');
+    
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+      return;
+    }
+    next();
+  });
+
+  // Main MCP endpoint - stateless mode
+  app.post('/mcp', async (req: Request, res: Response) => {
+    // In stateless mode, create a new instance of transport and server for each request
+    // to ensure complete isolation. A single instance would cause request ID collisions
+    // when multiple clients connect concurrently.
+    
+    try {
+      const server = createRDWServer(); 
+      const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
+        sessionIdGenerator: undefined, // Stateless mode
+      });
+      
+      res.on('close', () => {
+        console.log('Request closed');
+        transport.close();
+        server.close();
+      });
+      
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+      console.error('Error handling MCP request:', error);
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: '2.0',
+          error: {
+            code: -32603,
+            message: 'Internal server error',
+          },
+          id: null,
+        });
+      }
+    }
+  });
+
+  // SSE notifications not supported in stateless mode
+  app.get('/mcp', async (req: Request, res: Response) => {
+    console.log('Received GET MCP request');
+    res.writeHead(405).end(JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32000,
+        message: "Method not allowed. SSE notifications not supported in stateless mode."
+      },
+      id: null
+    }));
+  });
+
+  // Session termination not needed in stateless mode
+  app.delete('/mcp', async (req: Request, res: Response) => {
+    console.log('Received DELETE MCP request');
+    res.writeHead(405).end(JSON.stringify({
+      jsonrpc: "2.0",
+      error: {
+        code: -32000,
+        message: "Method not allowed. Session management not supported in stateless mode."
+      },
+      id: null
+    }));
+  });
+
+  // Health check endpoint
+  app.get('/health', (req: Request, res: Response) => {
+    res.json({ 
+      status: 'healthy', 
+      server: 'rdw-mcp-server',
+      version: '2.1.0',
+      transport: 'streamable-http-stateless'
+    });
+  });
+
+  // Start the server
+  app.listen(port, () => {
+    console.log(`RDW MCP Server (HTTP) listening on port ${port}`);
+    console.log(`Health check: http://localhost:${port}/health`);
+    console.log(`MCP endpoint: http://localhost:${port}/mcp`);
+  });
+}
+
+/**
+ * Start stdio server
+ */
+async function startStdioServer() {
+  const server = createRDWServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("RDW MCP Server running on stdio");
+}
+
+/**
+ * Main function - supports both stdio and HTTP modes
+ */
+async function main() {
+  const args = process.argv.slice(2);
+  
+  if (args.includes('--http')) {
+    const portArg = args.find(arg => arg.startsWith('--port='));
+    const port = portArg ? parseInt(portArg.split('=')[1]) : 3000;
+    await startHTTPServer(port);
+  } else {
+    await startStdioServer();
+  }
 }
 
 main().catch((error) => {
