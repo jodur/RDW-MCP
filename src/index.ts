@@ -14,18 +14,14 @@ import { z } from "zod";
 
 // RDW API Configuration
 const RDW_API_BASE = "https://opendata.rdw.nl/resource";
-const USER_AGENT = "RDW-MCP-Server/1.0";
+const USER_AGENT = "RDW-MCP-Server/2.0.3";
 
 /**
  * Create server instance with RDW capabilities
  */
 const server = new McpServer({
-  name: "rdw-mcp",
-  version: "1.0.0",
-  capabilities: {
-    resources: {},
-    tools: {},
-  },
+  name: "rdw-mcp-server",
+  version: "2.0.3",
 });
 
 /**
@@ -477,15 +473,16 @@ function formatVehicleInfo(
 }
 
 /**
- * Register RDW tool
+ * Register RDW license plate lookup tool using modern SDK patterns
  */
-
-// License plate lookup with ALL available RDW data
-server.tool(
+server.registerTool(
   "rdw-license-plate-lookup",
-  "Look up ALL available Dutch vehicle information from RDW databases including vehicle specs, fuel/emissions, APK history, recalls, ownership history, technical defects, and more",
   {
-    kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
+    title: "RDW License Plate Lookup",
+    description: "Look up ALL available Dutch vehicle information from RDW databases including vehicle specs, fuel/emissions, APK history, recalls, ownership history, technical defects, and more",
+    inputSchema: {
+      kenteken: z.string().min(1).describe("Dutch license plate (kenteken) to look up"),
+    }
   },
   async ({ kenteken }) => {
     // Clean up the license plate (remove spaces and hyphens, convert to uppercase)
