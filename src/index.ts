@@ -14,14 +14,14 @@ import { z } from "zod";
 
 // RDW API Configuration
 const RDW_API_BASE = "https://opendata.rdw.nl/resource";
-const USER_AGENT = "RDW-MCP-Server/2.0.3";
+const USER_AGENT = "RDW-MCP-Server/2.1.0";
 
 /**
  * Create server instance with RDW capabilities
  */
 const server = new McpServer({
   name: "rdw-mcp-server",
-  version: "2.0.3",
+  version: "2.1.0",
 });
 
 /**
